@@ -8,11 +8,8 @@
 #include "linkedlist.h"
 
 sem_t sync, delay_consumer;
-struct element *queue = NULL;
-struct element *queueCur = NULL;
-struct element *queuePrev = NULL;
-struct element *queueTail = NULL;
-int items, val;
+
+int items, val1, val2;
 
 void visualise() {
 	printf("iIndex = %d\n", items);
@@ -25,7 +22,7 @@ void * consumer(void * p) {
 	sem_wait(&delay_consumer);
 
 	//consumes job
-	for (int i = 0; i < NUMBER_OF_JOBS; i++) {
+	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {
 		sem_wait(&sync);
 		
 
@@ -44,25 +41,22 @@ void * consumer(void * p) {
 void * producer() {
 	
 	// produces job
-	for (int i = 0; i < NUMBER_OF_JOBS; i++) {
-		//struct process *oTemp = generateProcess(); // create process node         
-		sem_wait(&sync);
+	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {
 
-		//addLast(oTemp, &queue, &queueTail);
+		sem_wait(&sync);
 		items++;
 		visualise();
 		if (items == 1) {
 			sem_post(&delay_consumer);
 		}
-		sem_getvalue(&delay_consumer, &val);
-		printf("delay_cons: %d\n", val);
+		// sem_getvalue(&delay_consumer, &val);
+		// printf("delay_cons: %d\n", val);
 		sem_post(&sync);
 	}
 	
 	
 	
 }
-
 
 int main() {
     pthread_t prodThread, consThread;
@@ -72,6 +66,10 @@ int main() {
 	pthread_create(&consThread, NULL, consumer, NULL);
 	pthread_join(prodThread, NULL);
 	pthread_join(consThread, NULL);
+
+	sem_getvalue(&sync, &val1);
+	sem_getvalue(&delay_consumer, &val2);
+	printf("sSync = %d, sDelayConsumer = %d\n", val1, val2);
 
 }
 
