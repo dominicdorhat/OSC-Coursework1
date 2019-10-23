@@ -57,11 +57,12 @@ int main() {
         queueCur = queueCur->pNext;
     }
 
-    // keep a counter of removed processes then reduce it from NUMBER_OF_JOBS?
+	int numCompletedJobs = 0;
     while(queue != NULL) {
 
+		queuePrev = NULL; // reset prev queue
 		queueCur = queue; // reset cur queue
-        for(int k = 0; k < NUMBER_OF_JOBS; k++) {
+        for(int k = 0; k < (NUMBER_OF_JOBS-numCompletedJobs); k++) {
         
         struct timeval StartTime; // execution time 
         struct timeval EndTime; // execution time 
@@ -70,23 +71,26 @@ int main() {
         
 
         if (( ( (struct process *) (queueCur -> pData)) -> iRemainingBurstTime) == 0 ) {
-            
-			struct element *queueTemp = NULL;
+			if (queueCur == queue) {
+				removeFirst(&queue, &queueTail);
+			} else {
+				struct element *queueTemp = NULL;
 
-            turnAroundTime = getDifferenceInMilliSeconds(((struct process *) (queue -> pData)) -> oTimeCreated, EndTime);
+				turnAroundTime = getDifferenceInMilliSeconds(((struct process *) (queue->pData))->oTimeCreated, EndTime);
 
-            printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turn around Time = %d\n",
-                ((struct process *) (queueCur -> pData)) -> iProcessId,     
-                ((struct process *) (queueCur -> pData)) -> iPreviousBurstTime,
-                ((struct process *) (queueCur -> pData)) -> iRemainingBurstTime,            
-                turnAroundTime);
-            // remove node
-			
-			queuePrev->pNext = queueCur->pNext;
-			queueTemp = queueCur;
-			queueCur = queueCur->pNext;
-			free(queueTemp);
-            
+				printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turn around Time = %d\n",
+					((struct process *) (queueCur->pData))->iProcessId,
+					((struct process *) (queueCur->pData))->iPreviousBurstTime,
+					((struct process *) (queueCur->pData))->iRemainingBurstTime,
+					turnAroundTime);
+				// remove node
+				queuePrev->pNext = queueCur->pNext;
+				queueTemp = queueCur;
+				queueCur = queueCur->pNext;
+				free(queueTemp);
+				numCompletedJobs++;
+			}
+		
         } else {
              printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d\n",
             ((struct process *) (queueCur -> pData)) -> iProcessId,     
@@ -100,8 +104,8 @@ int main() {
         avgResponseTime += responseTime;
         avgTurnAroundTime += turnAroundTime;    
 		
-		
         }
+		printf("%d\n",numCompletedJobs);
     }
     
 
