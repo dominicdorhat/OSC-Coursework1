@@ -14,6 +14,10 @@ int main() {
     struct element *queueTail = NULL;
 
     int avgResponseTime, responseTime, avgTurnAroundTime, turnAroundTime;
+    int numCompletedJobsA = 0, numCompletedJobs = 0;	
+
+    struct timeval StartTime; // execution time 
+    struct timeval EndTime; // execution time 
 
 // create job
     printf("PROCESS LIST:\n");
@@ -22,11 +26,10 @@ int main() {
         addLast(oTemp, &queue, &queueTail);
         
         
-        printf("\tProcess Id = %d, Initial Burst Time = %d, Remaining Burst Time = %d, time created= %d\n",
+        printf("\tProcess Id = %d, Initial Burst Time = %d, Remaining Burst Time = %d\n",
         ((struct process *) (queueTail -> pData)) -> iProcessId,     
         ((struct process *) (queueTail -> pData)) -> iInitialBurstTime,
-        ((struct process *) (queueTail -> pData)) -> iRemainingBurstTime,
-            ((struct process *) (queueTail -> pData)) -> oTimeCreated     
+        ((struct process *) (queueTail -> pData)) -> iRemainingBurstTime             
         );            
 
     }    
@@ -35,10 +38,7 @@ int main() {
     printf("END:\n");            
 
 // run job
-    for(int j = 0; j < NUMBER_OF_JOBS; j++) {
-        
-        struct timeval StartTime; // execution time 
-        struct timeval EndTime; // execution time 
+    for(int j = 0; j < NUMBER_OF_JOBS; j++) {            
                     
         runPreemptiveJob((struct process *) (queueCur -> pData) , &StartTime, &EndTime);        
         
@@ -57,23 +57,19 @@ int main() {
         queueCur = queueCur->pNext;
     }
 
-	int numCompletedJobs = 0;
-	int numCompletedJobsA = 0;
     while(queue != NULL) {
 
 		queuePrev = NULL; // reset prev queue
 		queueCur = queue; // reset cur queue
         for(int k = 0; k < (NUMBER_OF_JOBS-numCompletedJobsA); k++) {
-        
-			struct timeval StartTime; // execution time 
-			struct timeval EndTime; // execution time 
+        		
                     
 			runPreemptiveJob((struct process *) (queueCur -> pData) , &StartTime, &EndTime);        
         
 
 			if (( ( (struct process *) (queueCur -> pData)) -> iRemainingBurstTime) == 0 ) {
 				if (queueCur == queue) {
-
+                    // if node is head
 					printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turn around Time = %d\n",
 						((struct process *) (queueCur->pData))->iProcessId,
 						((struct process *) (queueCur->pData))->iPreviousBurstTime,
@@ -81,6 +77,7 @@ int main() {
 						turnAroundTime);
 					removeFirst(&queue, &queueTail);
 					queueCur = queue;
+
 				} else {
 					struct element *queueTemp = NULL;
 
@@ -119,6 +116,6 @@ int main() {
     }
     
 
-    // printf("Average response time = %.6f\n", (float) avgResponseTime / NUMBER_OF_JOBS);
-    // printf("Average turn around time = %.6f\n", (float) avgTurnAroundTime / NUMBER_OF_JOBS);    
+    printf("Average response time = %.6f\n", (float) avgResponseTime / NUMBER_OF_JOBS);
+    printf("Average turn around time = %.6f\n", (float) avgTurnAroundTime / NUMBER_OF_JOBS);    
 }
