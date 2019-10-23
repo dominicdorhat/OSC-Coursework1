@@ -13,7 +13,7 @@ int main() {
 	struct element *queuePrev = NULL;
     struct element *queueTail = NULL;
 
-    int avgResponseTime, responseTime, avgTurnAroundTime, turnAroundTime;
+    int avgResponseTime, responseTime, avgTurnAroundTime = 0, turnAroundTime = 0;
     int numCompletedJobsA = 0, numCompletedJobs = 0;	
 
     struct timeval StartTime; // execution time 
