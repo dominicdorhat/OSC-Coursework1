@@ -10,6 +10,7 @@ int main() {
     // linked list
     struct element *queue = NULL;
     struct element *queueCur = NULL;
+	struct element *queuePrev = NULL;
     struct element *queueTail = NULL;
 
     int avgResponseTime, responseTime, avgTurnAroundTime, turnAroundTime;
@@ -33,6 +34,7 @@ int main() {
 
     printf("END:\n");            
 
+// run job
     for(int j = 0; j < NUMBER_OF_JOBS; j++) {
         
         struct timeval StartTime; // execution time 
@@ -50,7 +52,8 @@ int main() {
             responseTime);
 
         avgResponseTime += responseTime;
-        avgTurnAroundTime += turnAroundTime;                
+        avgTurnAroundTime += turnAroundTime;             
+		queuePrev = queueCur;
         queueCur = queueCur->pNext;
     }
 
@@ -75,8 +78,9 @@ int main() {
                 ((struct process *) (queueCur -> pData)) -> iPreviousBurstTime,
                 ((struct process *) (queueCur -> pData)) -> iRemainingBurstTime,            
                 turnAroundTime);
-            // remove node here
-            
+            // remove node
+			queuePrev->pNext = queueCur->pNext;
+			free(queueCur);
             
         } else {
              printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Response Time = %d\n",
@@ -88,7 +92,8 @@ int main() {
        
 
         avgResponseTime += responseTime;
-        avgTurnAroundTime += turnAroundTime;                
+        avgTurnAroundTime += turnAroundTime;    
+		queuePrev = queueCur;
         queueCur = queueCur->pNext;
         }
     }
