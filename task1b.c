@@ -73,7 +73,14 @@ int main() {
 
 			if (( ( (struct process *) (queueCur -> pData)) -> iRemainingBurstTime) == 0 ) {
 				if (queueCur == queue) {
+
+					printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turn around Time = %d\n",
+						((struct process *) (queueCur->pData))->iProcessId,
+						((struct process *) (queueCur->pData))->iPreviousBurstTime,
+						((struct process *) (queueCur->pData))->iRemainingBurstTime,
+						turnAroundTime);
 					removeFirst(&queue, &queueTail);
+					queueCur = queue;
 				} else {
 					struct element *queueTemp = NULL;
 
@@ -84,13 +91,14 @@ int main() {
 						((struct process *) (queueCur->pData))->iPreviousBurstTime,
 						((struct process *) (queueCur->pData))->iRemainingBurstTime,
 						turnAroundTime);
-					// remove node
+
 					queuePrev->pNext = queueCur->pNext;
 					queueTemp = queueCur;
 					queueCur = queueCur->pNext;
 					free(queueTemp);
-					numCompletedJobs++;
 				}
+			
+				numCompletedJobs++;
 		
 			} else {
 				 printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d\n",
@@ -106,7 +114,7 @@ int main() {
 			avgTurnAroundTime += turnAroundTime;    
 		
 			}
-			printf("%d\n",numCompletedJobs);
+
 			numCompletedJobsA = numCompletedJobs;
     }
     
