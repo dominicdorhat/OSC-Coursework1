@@ -23,8 +23,7 @@ int main() {
     printf("PROCESS LIST:\n");
     for (int i = 0; i < NUMBER_OF_JOBS; i++) {
         struct process *oTemp = generateProcess(); // create first process node         
-        addLast(oTemp, &queue, &queueTail);
-        
+        addLast(oTemp, &queue, &queueTail);        
         
         printf("\tProcess Id = %d, Initial Burst Time = %d, Remaining Burst Time = %d\n",
         ((struct process *) (queueTail -> pData)) -> iProcessId,     
@@ -37,7 +36,7 @@ int main() {
 
     printf("END:\n");            
 
-// run job
+    // run job
     for(int j = 0; j < NUMBER_OF_JOBS; j++) {            
                     
         runPreemptiveJob((struct process *) (queueCur -> pData) , &StartTime, &EndTime);        
@@ -52,7 +51,7 @@ int main() {
             responseTime);
 
         avgResponseTime += responseTime;
-        avgTurnAroundTime += turnAroundTime;             
+                
 		queuePrev = queueCur;
         queueCur = queueCur->pNext;
     }
@@ -70,6 +69,8 @@ int main() {
 			if (( ( (struct process *) (queueCur -> pData)) -> iRemainingBurstTime) == 0 ) {
 				if (queueCur == queue) {
                     // if node is head
+                    turnAroundTime = getDifferenceInMilliSeconds(((struct process *) (queue->pData))->oTimeCreated, EndTime);
+
 					printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turn around Time = %d\n",
 						((struct process *) (queueCur->pData))->iProcessId,
 						((struct process *) (queueCur->pData))->iPreviousBurstTime,
@@ -77,6 +78,8 @@ int main() {
 						turnAroundTime);
 					removeFirst(&queue, &queueTail);
 					queueCur = queue;
+
+                    avgTurnAroundTime += turnAroundTime;    
 
 				} else {
 					struct element *queueTemp = NULL;
@@ -93,6 +96,8 @@ int main() {
 					queueTemp = queueCur;
 					queueCur = queueCur->pNext;
 					free(queueTemp);
+
+                    avgTurnAroundTime += turnAroundTime;    
 				}
 			
 				numCompletedJobs++;
@@ -105,12 +110,8 @@ int main() {
 
 				 queuePrev = queueCur;
 				 queueCur = queueCur->pNext;
-			}
-       
-			avgResponseTime += responseTime;
-			avgTurnAroundTime += turnAroundTime;    
-		
-			}
+			}    		
+        }
 
 			numCompletedJobsA = numCompletedJobs;
     }
