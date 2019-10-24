@@ -36,7 +36,8 @@ void * consumer(void * p) {
 		items--;
 		temp = items;
 		
-		visualise(); // decide if calling this fcuntion shuold be in critical section or not
+		// visualise(); // decide if calling this fcuntion shuold be in critical section or not
+		printf("consumer: %d\n", items);
 		// end of critical section
 		sem_post(&sync);
 
@@ -59,7 +60,8 @@ void * producer() {
 		// critical section
 		sem_wait(&sync);
 		items++;
-		visualise();
+		// visualise();
+		printf("producer: %d\n", items);
 
 		if (items == 1) { // wakeup up consumer			
 			sem_post(&delay_consumer);
