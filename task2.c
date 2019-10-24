@@ -23,17 +23,30 @@ void * consumer(void * p) {
 
 	//consumes job
 	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {
+	// while(1) {
 		sem_wait(&sync);
-		
 
+		// if (temp == 0) {
+		// 	sem_wait(&delay_consumer);
+		// } else {
+		// 	sem_post(&delay_consumer);
+		// }
+		
+		// critical section
 		items--;
 		temp = items;
-		visualise();
-
+		
+		visualise(); // decide if calling this fcuntion shuold be in critical section or not
+		// end of critical section
 		sem_post(&sync);
-		if (temp == 0) {
+
+		if (temp == 0) {			
+			sem_getvalue(&delay_consumer, &val2);
+			printf("DelayConsumer before sem_wait()= %d\n", val2);
+			// TODO: problem where consumer eats non-existing items, delay_consumer semaphore is 1 before sem_wait, therefore consumer wont sleep
 			sem_wait(&delay_consumer);
 		}
+		
 	}
 }
 
@@ -43,19 +56,20 @@ void * producer() {
 	// produces job
 	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {
 
+		// critical section
 		sem_wait(&sync);
 		items++;
 		visualise();
-		if (items == 1) {
+
+		if (items == 1) { // wakeup up consumer			
 			sem_post(&delay_consumer);
 		}
 		// sem_getvalue(&delay_consumer, &val);
 		// printf("delay_cons: %d\n", val);
+
+		// end of critical section
 		sem_post(&sync);
-	}
-	
-	
-	
+	}			
 }
 
 int main() {
@@ -67,6 +81,7 @@ int main() {
 	pthread_join(prodThread, NULL);
 	pthread_join(consThread, NULL);
 
+	// print final semaphore values
 	sem_getvalue(&sync, &val1);
 	sem_getvalue(&delay_consumer, &val2);
 	printf("sSync = %d, sDelayConsumer = %d\n", val1, val2);
