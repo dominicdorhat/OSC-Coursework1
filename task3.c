@@ -53,7 +53,7 @@ void * consumer(void * p) {
 // producer
 void * producer(void * p) {
 	int producer_id = *(int *) p;
-	char * star = '*'; // create star
+	char * star = (char *) '*'; // create star
 
 	// produces job
 	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {
