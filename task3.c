@@ -43,7 +43,14 @@ void * consumer(void * p) {
 		visualise(); 
 		// end of critical section
 		sem_post(&sync);
-		if (i != MAX_NUMBER_OF_JOBS/NUMBER_OF_CONSUMERS - 1) {
+
+		sem_getvalue(&full, &fullVal);
+
+		// if (i != MAX_NUMBER_OF_JOBS/NUMBER_OF_CONSUMERS - 1) {
+		// 	sem_post(&empty);
+		// }
+
+		if (fullVal == MAX_BUFFER_SIZE - 1) {
 			sem_post(&empty);
 		}
 		
@@ -57,8 +64,11 @@ void * producer(void * p) {
 
 	// produces job
 	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {
-	//while(1){
-		sem_wait(&empty);
+	//while(1){ 
+		sem_getvalue(&full, &fullVal);
+		if(fullVal == MAX_BUFFER_SIZE){
+			sem_wait(&empty);
+		}
 		sem_wait(&sync);	
 		// critical section
         addLast( star, &queue, &queueTail); 
@@ -79,8 +89,8 @@ int main() {
 	int prodID[NUMBER_OF_PRODUCERS] = {0};
 
 	sem_init(&sync, 0, 1);
-	sem_init(&empty, 0, 50); //PRODUCER SLEEPS ON BINARY SEM
-	sem_init(&full, 0, 0);
+	sem_init(&empty, 0, 1); //PRODUCER SLEEPS ON -1
+	sem_init(&full, 0, 0); //COUNTING SEMAPHORE
 
 	for (int i = 0; i < NUMBER_OF_PRODUCERS ; i++ ) {
 		pthread_create(&prodThreadArr[i], NULL, producer, (void *) &(prodID[i]) ); 
