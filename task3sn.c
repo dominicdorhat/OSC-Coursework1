@@ -17,28 +17,19 @@ void visualise() {
 
 // consumer
 void * consumer(void * p) {
-	int temp; 
-
-	sem_wait(&delay_consumer);
 
 	//consumes job
-	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {
+	while(1){
 	
+		sem_wait(&full);
 		sem_wait(&sync);		
-		//
 		// critical section
-		
 		//REMOVE STARS BY REMOVEFIRST OF LINKED LIST
 		items--;
 		visualise(); 		
 		// end of critical section
 		sem_post(&sync);
-
-		if (temp == 0) {					
-			if(i != (MAX_NUMBER_OF_JOBS - 1)) {
-				sem_wait(&delay_consumer);
-			} 		
-		}
+		sem_post(&empty);
 		
 	}	
 }
@@ -48,19 +39,15 @@ void * producer() {
 	
 	// produces job
 	while(1){
-
+		sem_wait(&empty);
+		sem_wait(&sync);	
 		// critical section
-		sem_wait(&sync);		
 		//GENERATE STARS INTO NODE + ADD NODE TO LAST OF LINKED LIST
 		items++;
 		visualise();		
-
-		if (items == 1) { // wakeup up consumer			
-			sem_post(&delay_consumer);			
-		}
-
 		// end of critical section		
 		sem_post(&sync);
+		sem_post(&full);
 	}				
 }
 
