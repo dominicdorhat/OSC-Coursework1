@@ -33,7 +33,7 @@ int main() {
         printf("Process Id = %d, Previous Burst Time = %d, New Burst Time = %d, Response Time = %d, Turn Around Time = %d\n",
             ((struct process *) (queue -> pData)) -> iProcessId,     
             ((struct process *) (queue -> pData)) -> iInitialBurstTime,
-            ((struct process *) (queue -> pData)) -> iProcessId,
+            ((struct process *) (queue -> pData)) -> iRemainingBurstTime,
             responseTime,   
             turnAroundTime);
 
