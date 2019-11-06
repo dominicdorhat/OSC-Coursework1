@@ -25,8 +25,9 @@ int main() {
         struct process *oTemp = generateProcess(); // create first process node         
         addLast(oTemp, &queue, &queueTail);        
         
-        printf("\tProcess Id = %d, Initial Burst Time = %d, Remaining Burst Time = %d\n",
-        ((struct process *) (queueTail -> pData)) -> iProcessId,     
+        printf("\tProcess Id = %d, Priority = %d, Initial Burst Time = %d, Remaining Burst Time = %d\n",
+        ((struct process *) (queueTail -> pData)) -> iProcessId,
+        ((struct process *) (queueTail -> pData)) -> iPriority,
         ((struct process *) (queueTail -> pData)) -> iInitialBurstTime,
         ((struct process *) (queueTail -> pData)) -> iRemainingBurstTime             
         );            
@@ -44,8 +45,9 @@ int main() {
         responseTime = getDifferenceInMilliSeconds(((struct process *) (queue -> pData)) -> oTimeCreated, StartTime);   
         turnAroundTime = getDifferenceInMilliSeconds(((struct process *) (queue -> pData)) -> oTimeCreated, EndTime);
 
-        printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Response Time = %d\n",
-            ((struct process *) (queueCur -> pData)) -> iProcessId,     
+        printf("Process Id = %d, Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Response Time = %d\n",
+            ((struct process *) (queueCur -> pData)) -> iProcessId, 
+            ((struct process *) (queueCur -> pData)) -> iPriority,    
             ((struct process *) (queueCur -> pData)) -> iPreviousBurstTime,
             ((struct process *) (queueCur -> pData)) -> iRemainingBurstTime,            
             responseTime);
@@ -71,8 +73,9 @@ int main() {
                     // if node is head
                     turnAroundTime = getDifferenceInMilliSeconds(((struct process *) (queue->pData))->oTimeCreated, EndTime);
 
-					printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turn around Time = %d\n",
+					printf("Process Id = %d, Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turn around Time = %d\n",
 						((struct process *) (queueCur->pData))->iProcessId,
+                        ((struct process *) (queueCur -> pData)) -> iPriority,
 						((struct process *) (queueCur->pData))->iPreviousBurstTime,
 						((struct process *) (queueCur->pData))->iRemainingBurstTime,
 						turnAroundTime);
@@ -86,8 +89,9 @@ int main() {
 
 					turnAroundTime = getDifferenceInMilliSeconds(((struct process *) (queue->pData))->oTimeCreated, EndTime);
 
-					printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turn around Time = %d\n",
+					printf("Process Id = %d, Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turn around Time = %d\n",
 						((struct process *) (queueCur->pData))->iProcessId,
+                        ((struct process *) (queueCur -> pData)) -> iPriority,
 						((struct process *) (queueCur->pData))->iPreviousBurstTime,
 						((struct process *) (queueCur->pData))->iRemainingBurstTime,
 						turnAroundTime);
@@ -103,8 +107,9 @@ int main() {
 				numCompletedJobs++;
 		
 			} else {
-				 printf("Process Id = %d, Previous Burst Time = %d, Remaining Burst Time = %d\n",
-				((struct process *) (queueCur -> pData)) -> iProcessId,     
+				 printf("Process Id = %d, Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d\n",
+				((struct process *) (queueCur -> pData)) -> iProcessId,   
+                ((struct process *) (queueCur -> pData)) -> iPriority,  
 				((struct process *) (queueCur -> pData)) -> iPreviousBurstTime,
 				((struct process *) (queueCur -> pData)) -> iRemainingBurstTime);
 
