@@ -38,7 +38,8 @@ int main() {
             turnAroundTime);
 
         avgResponseTime += responseTime;
-        avgTurnAroundTime += turnAroundTime;        
+        avgTurnAroundTime += turnAroundTime;    
+        free(queue->pData);    
         removeFirst(&queue, &queueTail);
 
     }

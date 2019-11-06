@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <semaphore.h>
 #include <pthread.h>
-#include "coursework.h"
-#include "linkedlist.h"
+
+#define MAX_NUMBER_OF_JOBS 100
 
 sem_t sync, delay_consumer;
 

@@ -14,7 +14,7 @@ int main() {
     struct element *queueTail = NULL;
 
     int avgResponseTime, responseTime, avgTurnAroundTime = 0, turnAroundTime = 0;
-    int numCompletedJobsA = 0, numCompletedJobs = 0;	
+    int numCompletedJobsTemp = 0, numCompletedJobs = 0;	
 
     struct timeval StartTime; // execution time 
     struct timeval EndTime; // execution time 
@@ -62,7 +62,7 @@ int main() {
 
 		queuePrev = NULL; // reset prev queue
 		queueCur = queue; // reset cur queue
-        for(int k = 0; k < (NUMBER_OF_JOBS-numCompletedJobsA); k++) {
+        for(int k = 0; k < (NUMBER_OF_JOBS-numCompletedJobsTemp); k++) {
         		
                     
 			runPreemptiveJob((struct process *) (queueCur -> pData) , &StartTime, &EndTime);        
@@ -79,6 +79,7 @@ int main() {
 						((struct process *) (queueCur->pData))->iPreviousBurstTime,
 						((struct process *) (queueCur->pData))->iRemainingBurstTime,
 						turnAroundTime);
+                    free(queue->pData);
 					removeFirst(&queue, &queueTail);
 					queueCur = queue;
 
@@ -99,6 +100,7 @@ int main() {
 					queuePrev->pNext = queueCur->pNext;
 					queueTemp = queueCur;
 					queueCur = queueCur->pNext;
+                    free(queueTemp->pData);
 					free(queueTemp);
 
                     avgTurnAroundTime += turnAroundTime;    
@@ -118,7 +120,7 @@ int main() {
 			}    		
         }
 
-			numCompletedJobsA = numCompletedJobs;
+			numCompletedJobsTemp = numCompletedJobs;
     }
     
 

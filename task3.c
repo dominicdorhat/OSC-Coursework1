@@ -41,7 +41,6 @@ void * consumer(void * p) {
 		// end of critical section
 
 		sem_post(&sync);
-		// if (i != MAX_NUMBER_OF_JOBS/NUMBER_OF_CONSUMERS - 1) {
 		
 		sem_getvalue(&full, &fullVal);
 		if (fullVal == 49) {
