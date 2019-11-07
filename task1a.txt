@@ -8,5 +8,5 @@ Process Id = 6, Previous Burst Time = 41, New Burst Time = 0, Response Time = 20
 Process Id = 7, Previous Burst Time = 14, New Burst Time = 0, Response Time = 247, Turn Around Time = 261
 Process Id = 8, Previous Burst Time = 41, New Burst Time = 0, Response Time = 261, Turn Around Time = 302
 Process Id = 9, Previous Burst Time = 23, New Burst Time = 0, Response Time = 302, Turn Around Time = 325
-Average response time = 174.800003
+Average response time = 155.399994
 Average turn around time = 187.899994

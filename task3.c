@@ -1,4 +1,4 @@
-// Bounded consumer producer problem
+// authors: Tan Song Ning, Dominic Alphonsus Dorhat
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,17 +8,19 @@
 #include "coursework.h"
 #include "linkedlist.h"
 
-sem_t sync,full,sleep_producer;
+sem_t sync, full, sleep_producer;
+
 struct element *queue = NULL;
 struct element *queueTail = NULL;
-int items, syncVal, fullVal, sleep_producerVal, produced, consumed;
+
+int items, fullVal, produced, consumed;
 
 void visualise() {
-	struct element *queueCur = NULL; 
-	queueCur = queue;
+	struct element *queueCurrent = NULL; 
+	queueCurrent = queue;
 
-	for(; queueCur != NULL; queueCur = queueCur->pNext) {
-		printf("%c", (char *) (queueCur->pData));
+	for(; queueCurrent != NULL; queueCurrent = queueCurrent->pNext) {
+		printf("%c", (char *) (queueCurrent->pData));
 	}
 	printf("\n");
 }
@@ -28,7 +30,6 @@ void * consumer(void * p) {
 
 	//consumes job
 	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {
-	// while(1){
 		sem_wait(&full);
 		sem_wait(&sync);		
 
@@ -43,8 +44,8 @@ void * consumer(void * p) {
 		sem_post(&sync);
 		
 		sem_getvalue(&full, &fullVal);
-		if (fullVal == 49) {
-			sem_post(&sleep_producer);
+		if (fullVal == (MAX_BUFFER_SIZE - 1)) {
+			sem_post(&sleep_producer); // wake consumer the momen there's available space
 		}
 		
 	}	
@@ -55,24 +56,22 @@ void * producer(void * p) {
 	char * star = (char *) '*'; // create star
 
 	// produces job
-	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {
-	//while(1){
-		
+	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {		
 		sem_getvalue(&full, &fullVal);
 
-		if(fullVal == 50 ) {
-			sem_wait(&sleep_producer);
+		if(fullVal == MAX_BUFFER_SIZE ) {
+			sem_wait(&sleep_producer); // sleep producer at 50 items in buffer
 		}		
 		sem_wait(&sync);
 
 		// critical section
-        addLast( star, &queue, &queueTail); 
+        addLast(star, &queue, &queueTail); 
 		items++;
 		produced++;		
 		printf("Producer %d, Produced = %d, Consumed = %d: ", 1, produced, consumed);
 		visualise();
-
 		// end of critical section		
+
 		sem_post(&sync);
 		sem_post(&full);
 	}				
@@ -81,8 +80,9 @@ void * producer(void * p) {
 int main() {
 
 	pthread_t prodThread, consThread;
+	int syncVal, sleep_producerVal;
 
-	sem_init(&sync, 0, 1); 
+	sem_init(&sync, 0, 1); // mutual exclusion
 	sem_init(&sleep_producer, 0, 0); // binary sem for sleeping producer
 	sem_init(&full, 0, 0); // counting semaphore
 

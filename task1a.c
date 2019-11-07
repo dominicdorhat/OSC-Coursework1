@@ -1,4 +1,4 @@
-// FCFS
+// authors: Tan Song Ning, Dominic Alphonsus Dorhat
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,17 +13,17 @@ int main() {
 
     int avgResponseTime, responseTime, avgTurnAroundTime, turnAroundTime;
 
-// create job
+    // ready queue
     for (int i = 0; i < NUMBER_OF_JOBS; i++) {
-        struct process *oTemp = generateProcess(); // create first process node 
-        addLast(oTemp, &queue, &queueTail);        
+        struct process *newProcess = generateProcess();
+        addLast(newProcess, &queue, &queueTail);        
     }    
     
-    // typecasting from void to struct
+    // run process
     for(int j = 0; j < NUMBER_OF_JOBS; j++) {
         
-        struct timeval StartTime; // execution time 
-        struct timeval EndTime; // execution time 
+        struct timeval StartTime;  
+        struct timeval EndTime; 
             
         runNonPreemptiveJob((struct process *) (queue -> pData) , &StartTime, &EndTime);        
         
@@ -39,6 +39,7 @@ int main() {
 
         avgResponseTime += responseTime;
         avgTurnAroundTime += turnAroundTime;    
+
         free(queue->pData);    
         removeFirst(&queue, &queueTail);
 
@@ -46,14 +47,5 @@ int main() {
 
     printf("Average response time = %.6f\n", (float) avgResponseTime / NUMBER_OF_JOBS);
     printf("Average turn around time = %.6f\n", (float) avgTurnAroundTime / NUMBER_OF_JOBS);
-
-    // struct process *processToRun = queue;
-    // runNonPreemptiveJob(processToRun);
-
-
-
-    // addFirst(oTemp, queue);
-    
-    // process = generateProcess();
     
 }

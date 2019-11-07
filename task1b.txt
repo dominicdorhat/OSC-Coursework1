@@ -10,6 +10,7 @@ PROCESS LIST:
 	Process Id = 8, Priority = 2, Initial Burst Time = 41, Remaining Burst Time = 41
 	Process Id = 9, Priority = 24, Initial Burst Time = 23, Remaining Burst Time = 23
 END:
+
 Process Id = 0, Priority = 6, Previous Burst Time = 34, Remaining Burst Time = 29, Response Time = 0
 Process Id = 1, Priority = 19, Previous Burst Time = 28, Remaining Burst Time = 23, Response Time = 5
 Process Id = 2, Priority = 31, Previous Burst Time = 44, Remaining Burst Time = 39, Response Time = 10
