@@ -1,4 +1,5 @@
 // authors: Tan Song Ning, Dominic Alphonsus Dorhat
+//		made with our blood, sweat and tears
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +14,7 @@ sem_t sync, full, sleep_producer;
 struct element *queue = NULL;
 struct element *queueTail = NULL;
 
-int items, fullVal, produced, consumed;
+int fullVal, produced, consumed;
 
 void visualise() {
 	struct element *queueCurrent = NULL; 
@@ -35,7 +36,6 @@ void * consumer(void * p) {
 
 		// critical section
 		removeFirst(&queue, &queueTail);
-		items--;
 		consumed++;		
 		printf("Consumer %d, Produced = %d, Consumed = %d: ", 1, produced, consumed);
 		visualise(); 
@@ -59,14 +59,13 @@ void * producer(void * p) {
 	for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {		
 		sem_getvalue(&full, &fullVal);
 
-		if(fullVal == MAX_BUFFER_SIZE ) {
+		if(fullVal == MAX_BUFFER_SIZE - 1 ) {
 			sem_wait(&sleep_producer); // sleep producer at 50 items in buffer
 		}		
 		sem_wait(&sync);
 
 		// critical section
         addLast(star, &queue, &queueTail); 
-		items++;
 		produced++;		
 		printf("Producer %d, Produced = %d, Consumed = %d: ", 1, produced, consumed);
 		visualise();
