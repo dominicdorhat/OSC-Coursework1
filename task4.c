@@ -45,7 +45,6 @@ void * consumer(void * p) {
 		}		
 
 	}	
-    printf(":( id: %d\n", *((int *)p));
 }
 
 // producer
@@ -74,7 +73,6 @@ void * producer(void * p) {
         printf("(Produced) Items in buffer = %d\n", fullVal);
 
 	}			
-    printf("p :(\n");	
 }
 
 int main() {
