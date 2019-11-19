@@ -66,6 +66,10 @@ void * producer(void * p) {
 
 		// critical section
         addLast(star, &queue, &queueTail); 
+		struct process *newProcess;
+		newProcess = generateProcess();
+		printf("iPriority: %d\n", newProcess->iPriority);
+		
 		produced++;		
 		printf("Producer %d, Produced = %d, Consumed = %d: ", 1, produced, consumed);
 		visualise();
