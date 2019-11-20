@@ -103,7 +103,7 @@ void * consumer(void * p) {
         printf("Consumer %d, Produced = %d, Consumed = %d: Items in buffer = %d\n", *((int *)p), produced, consumed, fullVal);
 
         sem_getvalue(&full, &fullVal);
-        if (temp == (MAX_BUFFER_SIZE - 1)) { // 9 
+        if (temp == (MAX_BUFFER_SIZE - 1)) { // 9         
             int sleepVal; // TODO: remove later
             sem_getvalue(&sleep_producer, &sleepVal);
             printf("(items at  9)sleepProducer semaphore before sem_post = %d\n", sleepVal);
@@ -113,7 +113,6 @@ void * consumer(void * p) {
 
         // } else { sem_post(&full); } // post back the full semaphore (because of reset + not actually consuming anything)
 
-        // TODO: decide flag numbers
         // flag[*((int * )p)] = 0;
         // flag[0] = 0, flag[1] = 0, flag[2] = 0;
         // producedFlag = 0;
