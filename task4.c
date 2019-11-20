@@ -21,7 +21,7 @@ struct listPointers record[MAX_PRIORITY];
 struct timeval startTime;
 struct timeval endTime;
 
-int fullVal, produced, consumed, flag[3], producedFlag;
+int fullVal, produced, consumed, producedFlag;
 
 // TODO: decide how to exit the 3 consumers 
 
@@ -31,15 +31,86 @@ int queueIterator(struct listPointers * record) {
             return i;
         }
     }
+    return -1;
+}
+
+struct process * processJob(int iConsumerId, struct process * pProcess, struct timeval oStartTime, struct timeval oEndTime)
+{
+	int iResponseTime;
+	int iTurnAroundTime;
+    int dAverageResponseTime;
+    int dAverageTurnAroundTime;
+	
+	// first time to be processed (FCFS and RR)
+	if(pProcess->iPreviousBurstTime == pProcess->iInitialBurstTime && pProcess->iRemainingBurstTime > 0)
+	{
+		iResponseTime = getDifferenceInMilliSeconds(pProcess->oTimeCreated, oStartTime);	
+		dAverageResponseTime += iResponseTime;
+		printf("Consumer %d, Process Id = %d (%s), Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Response Time = %d\n", 
+			iConsumerId, pProcess->iProcessId, 
+			pProcess->iPriority < MAX_PRIORITY / 2	 ? "FCFS" : "RR",
+			pProcess->iPriority, pProcess->iPreviousBurstTime, 
+			pProcess->iRemainingBurstTime, 
+			iResponseTime);
+
+		return pProcess;
+
+	// job finish processing (RR)
+	} else if(pProcess->iPreviousBurstTime == pProcess->iInitialBurstTime && pProcess->iRemainingBurstTime == 0) {
+		iResponseTime = getDifferenceInMilliSeconds(pProcess->oTimeCreated, oStartTime);	
+		dAverageResponseTime += iResponseTime;
+		iTurnAroundTime = getDifferenceInMilliSeconds(pProcess->oTimeCreated, oEndTime);
+		dAverageTurnAroundTime += iTurnAroundTime;
+		printf("Consumer %d, Process Id = %d (%s), Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Response Time = %d, Turnaround Time = %d\n", 
+		iConsumerId, pProcess->iProcessId, 
+		pProcess->iPriority < MAX_PRIORITY / 2 ? "FCFS" : "RR", pProcess->iPriority, 
+		pProcess->iPreviousBurstTime, 
+		pProcess->iRemainingBurstTime, 
+		iResponseTime, 
+		iTurnAroundTime);
+
+		free(pProcess);
+
+		return NULL;
+
+	// job yet to be finished (RR)
+	} else if(pProcess->iPreviousBurstTime != pProcess->iInitialBurstTime && pProcess->iRemainingBurstTime > 0) {
+		printf("Consumer %d, Process Id = %d (%s), Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d\n", 
+		iConsumerId, 
+		pProcess->iProcessId,
+		pProcess->iPriority < MAX_PRIORITY / 2 ? "FCFS" : "RR", 
+		pProcess->iPriority, 
+		pProcess->iPreviousBurstTime, 
+		pProcess->iRemainingBurstTime);		
+
+		return pProcess;
+
+	// job finished (RR)
+	} else if(pProcess->iPreviousBurstTime != pProcess->iInitialBurstTime && pProcess->iRemainingBurstTime == 0) {
+		iTurnAroundTime = getDifferenceInMilliSeconds(pProcess->oTimeCreated, oEndTime);
+		dAverageTurnAroundTime += iTurnAroundTime;
+		printf("Consumer %d, Process Id = %d (%s), Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turnaround Time = %d\n", 
+		iConsumerId, 
+		pProcess->iProcessId, 
+		pProcess->iPriority < MAX_PRIORITY / 2 ? "FCFS" : "RR", 
+		pProcess->iPriority, 
+		pProcess->iPreviousBurstTime, 
+		pProcess->iRemainingBurstTime, 
+		iTurnAroundTime);
+		free(pProcess);
+
+		return NULL;
+	}
 }
 
 // consumer
 void * consumer(void * p) {
 
 	//consumes job
-	// for (int i = 0; i < MAX_NUMBER_OF_JOBS / NUMBER_OF_CONSUMERS; i++) {
-    while(consumed < NUMBER_OF_JOBS) {        
+    // while(consumed < NUMBER_OF_JOBS) {        
+    while(1) {        
         
+        struct process * job;
         sem_wait(&full); // not just as a counter, but to sleep consumers when there's nth in the buffer (prevent busy waiting)
         sem_wait(&sync);
 
@@ -49,44 +120,6 @@ void * consumer(void * p) {
         printf("\n(Consumer %d) i got the semaphore, with fullVal: %d and sync: %d\n", *((int * )p), fullVal, syncVal);
         temp = fullVal;
                 		
-        // for (int j = 0; flag[*((int *)p)] == 0 && j < MAX_PRIORITY; j++) {
-        // if (producedFlag == 0){ // enter only if producer not producing anything 
-            // for (int j = 0; producedFlag == 0 && j < MAX_PRIORITY; j++) {
-
-            //     // printf("i got the semaphore i should do smth 1\n");
-            //     if (record[j].head != NULL) {
-            //         sem_wait(&full);
-            //         // sem_wait(&sync);
-
-            //         int syncVal;
-            //         sem_getvalue(&full, &fullVal);
-            //         printf("\n(Consumer %d) i got the semaphore, with fullVal: %d", *((int * )p), fullVal);
-
-            //         // printf("i got the semaphore i should do smth 2\n");
-            //         printf("\n(Consumer %d says): I am going to consume!!!! at priority queue: %d ",*((int *)p), j);
-            //         printf("\t|\tiPriority actually consumed: %d\n", ((struct process *) (record[j].head->pData))->iPriority);
-                    
-            //         // TODO: change to runJob when we include RR
-            //         runPreemptiveJob((struct process *) (record[j].head->pData), &startTime, &endTime);
-            //         // free(record[j].head->pData);
-            //         removeFirst(&record[j].head, &record[j].tail);
-            //         // sem_wait(&full);
-
-            //         consumed++;		
-            //         sem_getvalue(&full, &fullVal);
-            //         printf("Consumer %d, Produced = %d, Consumed = %d: Items in buffer = %d\n", *((int *)p), produced, consumed, fullVal);
-
-            //         //sem_post(&sync); // TODO: decide when to sem_post()
-
-            //         sem_getvalue(&full, &fullVal);
-            //         if (fullVal == (MAX_BUFFER_SIZE - 1)) { // 9 
-            //             int sleepVal; // TODO: remove later
-            //             sem_getvalue(&sleep_producer, &sleepVal);
-            //             printf("(items at  9)sleepProducer semaphore before sem_post = %d\n", sleepVal);
-            //             sem_post(&sleep_producer); // wake producer the moment there's available space in a queue
-            //         }		
-            //     }   
-            // }
         sem_getvalue(&full, &fullVal);
 
         int index;
@@ -94,13 +127,28 @@ void * consumer(void * p) {
         printf("after china function, index = %d\n", index);
 
         printf("\n(Consumer %d says): I am going to consume!!!! at priority queue: %d ",*((int *)p), index);
-        printf("\t|\tiPriority actually consumed: %d\n", ((struct process *) (record[index].head->pData))->iPriority);
+        // printf("\t|\tiPriority actually consumed: %d\n", ((struct process *) (record[index].head->pData))->iPriority);
 
-        runPreemptiveJob((struct process *) (record[index].head->pData), &startTime, &endTime);
-        removeFirst(&record[index].head, &record[index].tail);
-        consumed++;
+        if (index >= 0){
+            runJob((struct process *) (record[index].head->pData), &startTime, &endTime);
+            job = processJob( *(int * )p, (struct process *) (record[index].head->pData), startTime, endTime);
+            removeFirst(&record[index].head, &record[index].tail);
+            
+            if (job != NULL) {
+                // RR addlast                 
+                addLast(job, &record[index].head , &record[index].tail); 
+                sem_post(&full);
+                sem_getvalue(&full, &fullVal);
+                temp = fullVal;
+            } else {                
+                consumed++;
+            }
+        } else {
+            printf("nth? %d\n", index);
+        }
+
         sem_getvalue(&full, &fullVal);
-        printf("Consumer %d, Produced = %d, Consumed = %d: Items in buffer = %d\n", *((int *)p), produced, consumed, fullVal);
+        // printf("Consumer %d, Produced = %d, Consumed = %d: Items in buffer = %d\n", *((int *)p), produced, consumed, fullVal);
 
         sem_getvalue(&full, &fullVal);
         if (temp == (MAX_BUFFER_SIZE - 1)) { // 9         
@@ -110,13 +158,6 @@ void * consumer(void * p) {
             sem_post(&sleep_producer); // wake producer the moment there's available space in a queue
         }
 
-
-        // } else { sem_post(&full); } // post back the full semaphore (because of reset + not actually consuming anything)
-
-        // flag[*((int * )p)] = 0;
-        // flag[0] = 0, flag[1] = 0, flag[2] = 0;
-        // producedFlag = 0;
-        // printf("i got the semaphore i should do smth 3: (consumerid: %d), flag is %d\n", *((int *)p), producedFlag);
         sem_post(&sync);
 
         sem_getvalue(&sync, &syncVal);
@@ -125,7 +166,8 @@ void * consumer(void * p) {
         printf("Consumed: %d\n", consumed);
         if (consumed == 100) break;
 	}	
-    printf("Consumer has consumed a 100!!!\n");    
+    // printf("Consumer has consumed a 100!!!\n");    
+     sem_post(&full);
 }
 
 // producer
@@ -133,40 +175,47 @@ void * producer(void * p) {
     struct process *newProcess;
 
 	// produces job
-	for (int i = 0; i < 100; i++) {		
-		sem_getvalue(&full, &fullVal);
-        int sleepVal;
+	// for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {		
+    while(1) {
+        int sleepVal, semwait;
         sem_getvalue(&sleep_producer, &sleepVal);
+		sem_getvalue(&full, &fullVal);
 
 		if(fullVal == MAX_BUFFER_SIZE) {
 			sem_wait(&sleep_producer); // sleep producer at 10 items in buffer
 		}		
 
 		printf("\n(Producer) production starting... sync: %d, sleepVal: %d\n", fullVal, sleepVal);
-        sem_wait(&sync);
+        semwait = sem_wait(&sync);
+		sem_getvalue(&full, &fullVal);
+        sem_getvalue(&sleep_producer, &sleepVal);
+        printf("\n(Producer) after sem-wait(sync).. sync: %d, sleepVal: %d, semwait: %d\n", fullVal, sleepVal, semwait);
+
 
 		// critical section
         newProcess= generateProcess();
         addLast(newProcess, &record[newProcess->iPriority].head , &record[newProcess->iPriority].tail); 
 
 		produced++;		
-		printf("Producer %d, Produced = %d, Consumed = %d: priority level added: %d\n", 1, produced, consumed, newProcess->iPriority);
+		// printf("Producer %d, Produced = %d, Consumed = %d: priority level added: %d\n", 1, produced, consumed, newProcess->iPriority);
+        printf("Producer %d, Process Id = %d (%s), Priority = %d, Initial Burst Time = %d\n", 
+		0, 
+		newProcess->iProcessId,
+		newProcess->iPriority < MAX_PRIORITY / 2 ? "FCFS" : "RR", 
+		newProcess->iPriority, 
+		newProcess->iInitialBurstTime);
+
         
 		// end of critical section		
 		
          int syncVal;
         sem_getvalue(&sync, &syncVal);
         sem_getvalue(&full, &fullVal);
-        printf("(Producer Report: )producer sync semahore: %d + 1, full semaphore/items in the buffer: %d + 1\n", syncVal, fullVal);
-        sem_post(&sync);        
+        printf("(Producer Report: )producer sync semahore: %d + 1, full semaphore/items in the buffer: %d + 1\n", syncVal, fullVal);		
+        
         sem_post(&full);
-
-        // TODO: decide flag
-        // flag[0] = 1, flag[1] = 1, flag[2] = 1;
-        // producedFlag = 1;
-        // sem_getvalue(&full, &fullVal);
-        // printf("(Produced) Items in buffer = %d\n", fullVal);
-
+        sem_post(&sync);        
+        if(produced == MAX_NUMBER_OF_JOBS) { break;}
 	}			
 }
 
@@ -174,7 +223,7 @@ int main() {
 
 	pthread_t prodThread, consThread[NUMBER_OF_CONSUMERS];
 	int syncVal, sleep_producerVal;
-    int consumerID[NUMBER_OF_CONSUMERS] = {1, 2, 3};
+    int consumerID[NUMBER_OF_CONSUMERS] = {0, 1, 2};
 
 	sem_init(&sync, 0, 1); // mutual exclusion
 	sem_init(&sleep_producer, 0, 0); // binary sem for sleeping producer
