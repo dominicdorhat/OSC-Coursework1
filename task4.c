@@ -13,7 +13,7 @@ struct listPointers {
     struct element * tail;
 };
 
-sem_t sync, full, sleep_producer;
+sem_t sync, full, sleep_producer, empty;
 
 struct listPointers record[MAX_PRIORITY];
 
@@ -21,7 +21,7 @@ struct listPointers record[MAX_PRIORITY];
 struct timeval startTime;
 struct timeval endTime;
 
-int fullVal, produced, consumed, producedFlag;
+int fullVal, produced, consumed;;
 
 // TODO: decide how to exit the 3 consumers 
 
@@ -105,20 +105,21 @@ struct process * processJob(int iConsumerId, struct process * pProcess, struct t
 
 // consumer
 void * consumer(void * p) {
-
+    int syncVal, temp, sleepVal;
 	//consumes job
     // while(consumed < NUMBER_OF_JOBS) {        
     while(1) {        
         
         struct process * job;
         sem_wait(&full); // not just as a counter, but to sleep consumers when there's nth in the buffer (prevent busy waiting)
+        sem_getvalue(&full, &fullVal);
+        temp = fullVal;
+
         sem_wait(&sync);
 
-        int syncVal, temp;
-        sem_getvalue(&full, &fullVal);
+        
         sem_getvalue(&sync, &syncVal);
         printf("\n(Consumer %d) i got the semaphore, with fullVal: %d and sync: %d\n", *((int * )p), fullVal, syncVal);
-        temp = fullVal;
                 		
         sem_getvalue(&full, &fullVal);
 
@@ -150,18 +151,21 @@ void * consumer(void * p) {
         sem_getvalue(&full, &fullVal);
         // printf("Consumer %d, Produced = %d, Consumed = %d: Items in buffer = %d\n", *((int *)p), produced, consumed, fullVal);
 
-        sem_getvalue(&full, &fullVal);
-        if (temp == (MAX_BUFFER_SIZE - 1)) { // 9         
-            int sleepVal; // TODO: remove later
-            sem_getvalue(&sleep_producer, &sleepVal);
-            printf("(items at  9)sleepProducer semaphore before sem_post = %d\n", sleepVal);
-            sem_post(&sleep_producer); // wake producer the moment there's available space in a queue
-        }
+        sem_getvalue(&sleep_producer, &sleepVal);
+        printf("check sleep value: %d\n", sleepVal);
+        // if (temp == (MAX_BUFFER_SIZE - 1)) { // 9         
+        // if (sleepVal == -1) {
+        //     int sleepVal; // TODO: remove later
+        //     sem_getvalue(&sleep_producer, &sleepVal);
+        //     printf("(items at  9)sleepProducer semaphore before sem_post = %d\n", sleepVal);
+        //     sem_post(&sleep_producer); // wake producer the moment there's available space in a queue
+        // }
 
         sem_post(&sync);
+        sem_post(&empty);
 
         sem_getvalue(&sync, &syncVal);
-        printf("(Consumer %d) i no longer have the semaphore, sem sync value is: %d, flag is %d\n", *((int * )p), syncVal, producedFlag);
+        printf("(Consumer %d) i no longer have the semaphore, sem sync value is: %d\n", *((int * )p), syncVal);
 
         printf("Consumed: %d\n", consumed);
         if (consumed == 100) break;
@@ -177,23 +181,28 @@ void * producer(void * p) {
 	// produces job
 	// for (int i = 0; i < MAX_NUMBER_OF_JOBS; i++) {		
     while(1) {
-        int sleepVal, semwait;
+        int sleepVal, syncVal;
         sem_getvalue(&sleep_producer, &sleepVal);
-		sem_getvalue(&full, &fullVal);
+		sem_getvalue(&sync, &syncVal);
+        sem_getvalue(&full, &fullVal);
 
-		if(fullVal == MAX_BUFFER_SIZE) {
-			sem_wait(&sleep_producer); // sleep producer at 10 items in buffer
-		}		
 
-		printf("\n(Producer) production starting... sync: %d, sleepVal: %d\n", fullVal, sleepVal);
-        semwait = sem_wait(&sync);
+		// if(fullVal == MAX_BUFFER_SIZE) {
+        //     printf("sleeping producer...\n");
+		// 	sem_wait(&sleep_producer); // sleep producer at 10 items in buffer
+		// }		
+
+		printf("\n(Producer) production starting... sync: %d, sleepVal: %d, fullVal: %d\n", syncVal, sleepVal, fullVal);
+        sem_wait(&empty);
+        sem_wait(&sync);
+        sem_getvalue(&sync, &syncVal);
 		sem_getvalue(&full, &fullVal);
         sem_getvalue(&sleep_producer, &sleepVal);
-        printf("\n(Producer) after sem-wait(sync).. sync: %d, sleepVal: %d, semwait: %d\n", fullVal, sleepVal, semwait);
+        printf("\n(Producer) after sem-wait(sync).. sync: %d, sleepVal: %d\n", syncVal, sleepVal);
 
 
 		// critical section
-        newProcess= generateProcess();
+        newProcess = generateProcess();
         addLast(newProcess, &record[newProcess->iPriority].head , &record[newProcess->iPriority].tail); 
 
 		produced++;		
@@ -208,14 +217,13 @@ void * producer(void * p) {
         
 		// end of critical section		
 		
-         int syncVal;
         sem_getvalue(&sync, &syncVal);
         sem_getvalue(&full, &fullVal);
         printf("(Producer Report: )producer sync semahore: %d + 1, full semaphore/items in the buffer: %d + 1\n", syncVal, fullVal);		
         
         sem_post(&full);
         sem_post(&sync);        
-        if(produced == MAX_NUMBER_OF_JOBS) { break;}
+        if(produced == MAX_NUMBER_OF_JOBS) break;
 	}			
 }
 
@@ -228,6 +236,7 @@ int main() {
 	sem_init(&sync, 0, 1); // mutual exclusion
 	sem_init(&sleep_producer, 0, 0); // binary sem for sleeping producer
 	sem_init(&full, 0, 0); // counting semaphore
+    sem_init(&empty, 0, MAX_BUFFER_SIZE);
 
 	pthread_create(&prodThread, NULL, producer, NULL); 
 	
