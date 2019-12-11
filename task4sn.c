@@ -117,18 +117,19 @@ void * consumer(void * p) {
         sem_wait(&full); 
         sem_wait(&sync);          		
 
-        //index = queueIterator(record); // find job to eat
-		
-		for (int i = 0; i < MAX_PRIORITY; i++) {
-			if ((struct process *)record[i].head != NULL) {
-				jobToConsume = (struct process *) record[i].head->pData;
-				removeFirst(&record[i].head, &record[i].tail);
-				sem_post(&sync);
+        index = queueIterator(record); // find job to eat
+		sem_post(&sync)
 
-				index = i;
-				i = MAX_PRIORITY;
-			}
-		}
+		// for (int i = 0; i < MAX_PRIORITY; i++) {
+		// 	if ((struct process *)record[i].head != NULL) {
+		// 		jobToConsume = (struct process *) record[i].head->pData;
+		// 		removeFirst(&record[i].head, &record[i].tail);
+		// 		sem_post(&sync);
+
+		// 		index = i;
+		// 		i = MAX_PRIORITY;
+		// 	}
+		// }
 		
 		//find what to eat and isolate it from the linked list then only process it
 		
@@ -150,9 +151,6 @@ void * consumer(void * p) {
             } else {                
                 consumed++;
             }
-		} else {
-
-			sem_post(&sync);
 		}
       
 		//sem_post(&sync);
@@ -207,7 +205,7 @@ int main() {
 	sem_init(&sync, 0, 1); // mutual exclusion
 	sem_init(&sleep_producer, 0, 0); // binary sem for sleeping producer
 	sem_init(&full, 0, 0); // counting semaphore
-    sem_init(&empty, 0, MAX_BUFFER_SIZE);
+    sem_init(&empty, 0, 100);
 
 	pthread_create(&prodThread, NULL, producer, NULL); 
 	
