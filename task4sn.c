@@ -21,17 +21,24 @@ struct listPointers record[MAX_PRIORITY];
 struct timeval startTime;
 struct timeval endTime;
 
-int fullVal, produced, consumed;;
+int fullVal, produced, consumed, hyperIndex = 0, dirtyBit = 0;
 
 // TODO: decide how to exit the 3 consumers 
 
-int queueIterator(struct listPointers * record) {
-    for(int i = 0; i < MAX_PRIORITY; i++) {
+struct process * queueIterator(struct listPointers * record) {
+	struct process * jobToConsume;
+
+    for(int i = hyperIndex; i < MAX_PRIORITY & dirtyBit == 0; i++) {
         if (record[i].head != NULL) {
-            return i;
+			jobToConsume = (struct process *) record[i].head->pData;
+			removeFirst(&record[i].head, &record[i].tail);
+			hyperIndex = i;
+            return jobToConsume;
         }
     }
-    return -1;
+	hyperIndex = 0;
+	dirtyBit = 0;
+    return NULL;
 }
 
 struct process * processJob(int iConsumerId, struct process * pProcess, struct timeval oStartTime, struct timeval oEndTime)
@@ -61,13 +68,13 @@ struct process * processJob(int iConsumerId, struct process * pProcess, struct t
 		dAverageResponseTime += iResponseTime;
 		iTurnAroundTime = getDifferenceInMilliSeconds(pProcess->oTimeCreated, oEndTime);
 		dAverageTurnAroundTime += iTurnAroundTime;
-		printf("Consumer %d, Process Id = %d (%s), Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Response Time = %d, Turnaround Time = %d\n", 
+		printf("hi Consumer %d, Process Id = %d (%s), Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Response Time = %d, Turnaround Time = %d, Consumed = %d\n", 
 		iConsumerId, pProcess->iProcessId, 
 		pProcess->iPriority < MAX_PRIORITY / 2 ? "FCFS" : "RR", pProcess->iPriority, 
 		pProcess->iPreviousBurstTime, 
 		pProcess->iRemainingBurstTime, 
 		iResponseTime, 
-		iTurnAroundTime);
+		iTurnAroundTime, consumed);
 
 		free(pProcess);
 
@@ -89,19 +96,29 @@ struct process * processJob(int iConsumerId, struct process * pProcess, struct t
 	} else if(pProcess->iPreviousBurstTime != pProcess->iInitialBurstTime && pProcess->iRemainingBurstTime == 0) {
 		iTurnAroundTime = getDifferenceInMilliSeconds(pProcess->oTimeCreated, oEndTime);
 		dAverageTurnAroundTime += iTurnAroundTime;
-		printf("Consumer %d, Process Id = %d (%s), Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turnaround Time = %d\n", 
+		printf("Consumer %d, Process Id = %d (%s), Priority = %d, Previous Burst Time = %d, Remaining Burst Time = %d, Turnaround Time = %d consumed = %d\n", 
 		iConsumerId, 
 		pProcess->iProcessId, 
 		pProcess->iPriority < MAX_PRIORITY / 2 ? "FCFS" : "RR", 
 		pProcess->iPriority, 
 		pProcess->iPreviousBurstTime, 
 		pProcess->iRemainingBurstTime, 
-		iTurnAroundTime);
+		iTurnAroundTime, consumed		);
 		free(pProcess);
-
+		
 		return NULL;
 	}
 }
+
+// void printSem(char* semaphore_name){
+// 	if(semaphore_name == "sync"){
+// 		sem_getvalue(&sync,&syncVal);
+// 		printf("Sync is %d---------\n",syncVal);
+// 	} else if(semaphore_name == "full"){
+// 		sem_getvalue(&full,&fullVal);
+// 		printf("Full is %d---------\n",fullVal);
+// 	}
+// }
 
 // consumer
 void * consumer(void * p) {
@@ -114,52 +131,41 @@ void * consumer(void * p) {
 		struct process * jobToConsume;
 		int index = -1;
 
+
         sem_wait(&full); 
-        sem_wait(&sync);          		
-
-        index = queueIterator(record); // find job to eat
-		sem_post(&sync)
-
-		// for (int i = 0; i < MAX_PRIORITY; i++) {
-		// 	if ((struct process *)record[i].head != NULL) {
-		// 		jobToConsume = (struct process *) record[i].head->pData;
-		// 		removeFirst(&record[i].head, &record[i].tail);
-		// 		sem_post(&sync);
-
-		// 		index = i;
-		// 		i = MAX_PRIORITY;
-		// 	}
-		// }
+		sem_getvalue(&full,&fullVal);
+		printf("Full is %d---------\n",fullVal);
+        
+		sem_wait(&sync);          		
+        jobToConsume = queueIterator(record); 
+		sem_post(&sync);
 		
-		//find what to eat and isolate it from the linked list then only process it
-		
-
-        if (index >= 0){
-			
+        if (jobToConsume != NULL){ //if there is sth to consume
+			index = jobToConsume->iPriority;
             runJob(jobToConsume, &startTime, &endTime);
             job = processJob( *(int * )p, jobToConsume, startTime, endTime);
 			
             
             if (job != NULL) {
-				
-				//sem_wait(&sync);
+	
+				sem_wait(&sync);
                 addLast(job, &record[index].head , &record[index].tail); 
-				//sem_post(&sync);
+				sem_post(&sync);
 
                 sem_post(&full);
-  
+
             } else {                
                 consumed++;
             }
+
+		} else {
+			sem_post(&full);	
 		}
-      
-		//sem_post(&sync);
+
 		sem_post(&empty);
 
-        
         if (consumed >= 100) break;
 	}	
-    
      sem_post(&full);
 	 return NULL;
 }
@@ -176,6 +182,7 @@ void * producer(void * p) {
         newProcess = generateProcess();
 		
 		sem_wait(&sync);
+		dirtyBit = 1;
         addLast(newProcess, &record[newProcess->iPriority].head , &record[newProcess->iPriority].tail); 
 		sem_post(&sync);
 
